@@ -1,26 +1,40 @@
 export const ClientIntake1Locator = {
-  // Button to start the application process
+  // --- PART 1 LOCATORS ---
   startApplicationButton: { role: 'button', name: 'Start Application' },
-  // Input field for First Name
   firstNameInput: { role: 'textbox', name: 'First Name*' },
-  // Input field for Last Name
   lastNameInput: { role: 'textbox', name: 'Last Name*' },
-  // Input field for Date of Birth
   dobInput: { role: 'textbox', name: 'Date of Birth*' },
-  // Button to open the date picker calendar
   openDatePickerButton: { role: 'button', name: 'Open date picker' },
-  // Specific date gridcell in the date picker
   dateGridCell: { role: 'gridcell', name: '8', exact: true },
-  // Input field for Social Security Number
   ssnInput: { role: 'textbox', name: 'Social Security Number' },
-  // Combobox for Home Address autocomplete
   homeAddressCombobox: { role: 'combobox', name: 'Home address with autocomplete' },
-  // Specific address suggestion text from dropdown
-  addressSuggestionText: 'text=Newbury StreetBoston, MA, USA',
-  // Input field for ZIP Code
+  addressSuggestionText: 'text=Frank Lee Lane',
   zipCodeInput: { role: 'textbox', name: 'ZIP Code*' },
-  // Input field for Primary Phone Number
   phoneInput: { role: 'textbox', name: 'Primary Phone Number*' },
-  // Input field for Email Address
   emailInput: { role: 'textbox', name: 'Email Address*' },
+  
+  // Insurance Information
+  insuranceCarrierInput: { role: 'textbox', name: 'Insurance Carrier / Plan' },
+  memberIdInput: { role: 'textbox', name: 'Member ID Number*' },
+  groupNumberInput: { role: 'textbox', name: 'Group Number (if applicable)' },
+  
+  // Transition Button bridging Part 1 and Part 2
+  continueButton: { role: 'button', name: 'Continue' },
+
+  // --- PART 2 LOCATORS (PAYMENT & SIGNATURE) ---
+  readAndUnderstandCheckbox: { role: 'checkbox', name: 'I have read and understand' },
+  readUnderstoodLabel: 'label:has-text("I have read, understood, and")',
+  signatureCanvas: '#signature-r28',
+  stripeIframe: 'iframe[title="Secure card payment input frame"]',
+  cardNumberInput: { role: 'textbox', name: 'Credit or debit card number' },
+  cardExpiryInput: { role: 'textbox', name: 'Credit or debit card expiration date' },
+  cardCvcInput: { role: 'textbox', name: 'Credit or debit card CVC/CVV' },
+  payButton: { role: 'button', name: 'Pay $' },
+  continueToPart2Button: { role: 'button', name: 'Continue to Part' },
+
+  // --- PART 3 LOCATORS (OTP VERIFICATION) ---
+  sendOtpButton: { role: 'button', name: 'Send OTP' },
+  otpTextbox: { role: 'textbox' }, // Note: may need a more specific locator if there are multiple textboxes
+  verifyOtpButton: { role: 'button', name: 'Verify OTP' },
+  clientTherapistHeading: { role: 'heading', name: 'Client & Therapist' },
 } as const;

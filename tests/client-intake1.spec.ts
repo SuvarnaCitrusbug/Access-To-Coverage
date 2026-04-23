@@ -3,46 +3,78 @@ import { faker } from '@faker-js/faker';
 import { ClientIntake1Page } from '../pages/client-intake1.page';
 import { applicationMessages } from '../messages/messages';
 
-test.describe('Client Intake Flow', () => {
-  let clientIntake1Page: ClientIntake1Page;
+test.describe('Client Intake Flow (Combined E2E)', () => {
+  let clientIntakePage: ClientIntake1Page;
 
-  // This runs before EACH test case to set up the starting point
   test.beforeEach(async ({ page }) => {
-    clientIntake1Page = new ClientIntake1Page(page);
-    console.log('Setup: Navigating to URL and Starting Application');
-    await clientIntake1Page.startApplication();
+    clientIntakePage = new ClientIntake1Page(page);
   });
 
-  test('Verify navigation from Landing Page to Client Intake Page 1', async ({ page }) => {
-    console.log('Test 1: Check that clicking Start Application reaches the form');
+  test('Complete End-to-End Client Intake and Payment', async ({ page }) => {
+    // Override Playwright's default 30s timeout since we have massive manual wait loops
+    test.setTimeout(300000); // 5 minutes timeout
+
+    // ---------------------------------------------------------
+    // PART 1: START AND INITIAL FORM
+    // ---------------------------------------------------------
+    console.log('Step 1: Navigating to landing page and starting application');
+    await clientIntakePage.startApplication();
     
-    // Verify that the navigation was successful
+    // Verify successful navigation to the first section
     await expect(page).toHaveURL(/.*stg-app.accesstocoverage.com.*/);
-    
-    // Check that at least one form element is visible, confirming we are on Intake Page 1
-    await expect(clientIntake1Page.getEmailInput()).toBeVisible();
-  });
+    await expect(clientIntakePage.getEmailInput()).toBeVisible();
 
-  test('Fill out the Client Intake form Section-1', async () => {
-    console.log('Test 2: Fill out all the form details');
-    
-    // Generate dynamic test data using faker
+    console.log('Step 2: Filling out the core personal details (Section 1)');
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
     const ssn = `${faker.string.numeric(3)}-${faker.string.numeric(2)}-${faker.string.numeric(4)}`;
     const phone = `(${faker.string.numeric(3)}) ${faker.string.numeric(3)}-${faker.string.numeric(4)}`;
-    const email = faker.internet.email();
+    const email = `${faker.internet.username().toLowerCase()}@yopmail.com`;
+    
+    // Insurance mock data
+    const carrier = faker.company.name();
+    const memberId = faker.string.alphanumeric(10).toUpperCase();
+    const groupNumber = faker.string.alphanumeric(8).toUpperCase();
 
-    console.log('Step 1: Filling in personal details');
-    await clientIntake1Page.fillPersonalDetails(firstName, lastName, ssn);
+    await clientIntakePage.fillPersonalDetails(firstName, lastName, ssn);
+    await clientIntakePage.fillAddressDetails(applicationMessages.addressPartialSearch, applicationMessages.defaultZipCode);
+    await clientIntakePage.fillContactDetails(phone, email);
+    
+    console.log('Step 2b: Filling out insurance details');
+    await clientIntakePage.fillInsuranceDetails(carrier, memberId, groupNumber);
+    
+    await expect(clientIntakePage.getEmailInput()).toHaveValue(email);
 
-    console.log('Step 2: Filling in address details');
-    await clientIntake1Page.fillAddressDetails(applicationMessages.addressPartialSearch, applicationMessages.defaultZipCode);
+    // ---------------------------------------------------------
+    // TRANSITION
+    // ---------------------------------------------------------
+    console.log('Step 3: Clicking Continue to transition to Section 2');
+    await clientIntakePage.clickContinueToNextSection();
 
-    console.log('Step 3: Filling in contact details');
-    await clientIntake1Page.fillContactDetails(phone, email);
+    // ---------------------------------------------------------
+    // PART 2: SIGNATURE AND PAYMENT
+    // ---------------------------------------------------------
+    console.log('Step 4: Process the signature portion');
+    await clientIntakePage.signAgreements();
 
-    console.log('Step 4: Verifying input details');
-    await expect(clientIntake1Page.getEmailInput()).toHaveValue(email);
+    console.log('Step 5: Process Stripe payment details');
+    await clientIntakePage.fillPaymentDetails(
+      applicationMessages.stripeTestCard,
+      applicationMessages.stripeTestExpiry,
+      applicationMessages.stripeTestCvc
+    );
+
+    console.log('Step 6: Submit payment and finalize');
+    await clientIntakePage.submitPaymentAndContinue();
+
+    // Verify it navigates away from the success query param or lands on expected page
+    await expect(page).not.toHaveURL(/.*payment=success.*/);
+
+    // ---------------------------------------------------------
+    // PART 3: OTP VERIFICATION
+    // ---------------------------------------------------------
+    console.log('Step 7: OTP Verification after Payment');
+    await clientIntakePage.handleOtpVerification('');
+    
   });
 });
